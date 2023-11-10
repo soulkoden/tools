@@ -3,7 +3,6 @@ package cache
 import (
 	"os"
 	"path"
-	"syscall"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -60,18 +59,7 @@ func (t *FilesystemItem) IsHit() bool {
 		return true
 	}
 
-	stat_t, ok := stat.Sys().(*syscall.Stat_t)
-
-	if !ok {
-		logrus.Errorf("os no supports Stat_t")
-
-		return true
-	}
-
-	updatedAtSpec := stat_t.Mtimespec
-	updatedAt := time.Unix(updatedAtSpec.Sec, updatedAtSpec.Nsec)
-
-	return t.expiration.Sub(updatedAt) >= 0
+	return t.expiration.Sub(stat.ModTime()) > 0
 }
 
 func (t *FilesystemItem) Set(value []byte) {
