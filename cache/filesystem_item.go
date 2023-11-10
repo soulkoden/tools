@@ -60,7 +60,15 @@ func (t *FilesystemItem) IsHit() bool {
 		return true
 	}
 
-	updatedAtSpec := stat.Sys().(*syscall.Stat_t).Mtimespec
+	stat_t, ok := stat.Sys().(*syscall.Stat_t)
+
+	if !ok {
+		logrus.Errorf("os no supports Stat_t")
+
+		return true
+	}
+
+	updatedAtSpec := stat_t.Mtimespec
 	updatedAt := time.Unix(updatedAtSpec.Sec, updatedAtSpec.Nsec)
 
 	return t.expiration.Sub(updatedAt) >= 0

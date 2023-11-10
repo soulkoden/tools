@@ -4,7 +4,7 @@
 Example usage:
 
 ```go
-itemPool, _ := cache.NewItemPool(os.TempDir())
+itemPool, _ := cache.NewFilesystemItemPool(os.TempDir())
 
 item := itemPool.GetItem("my_key")
 item.Set([]byte("My Data"))
