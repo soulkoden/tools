@@ -13,7 +13,7 @@ import (
 func TestCache(t *testing.T) {
 	t.Parallel()
 
-	itemPool, err := cache.NewItemPool(os.TempDir())
+	itemPool, err := cache.NewFilesystemItemPool(os.TempDir())
 	assert.NoError(t, err)
 
 	const item1Key = "example~"

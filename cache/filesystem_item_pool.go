@@ -7,15 +7,16 @@ import (
 	"path"
 
 	"github.com/sirupsen/logrus"
+	"github.com/soulkoden/tools/contract"
 )
 
-type ItemPool struct {
+type FilesystemItemPool struct {
 	dir string
 
-	queue []*Item
+	queue []contract.Item[[]byte]
 }
 
-func NewItemPool(dir string) (*ItemPool, error) {
+func NewFilesystemItemPool(dir string) (contract.ItemPool[[]byte], error) {
 	stat, err := os.Stat(dir)
 	if err != nil {
 		return nil, fmt.Errorf("cache directory is unreadable: %w", err)
@@ -25,18 +26,18 @@ func NewItemPool(dir string) (*ItemPool, error) {
 		return nil, errors.New("cache directory is not a directory")
 	}
 
-	return &ItemPool{
+	return &FilesystemItemPool{
 		dir:   dir,
-		queue: make([]*Item, 0),
+		queue: make([]contract.Item[[]byte], 0),
 	}, nil
 }
 
-func (t *ItemPool) GetItem(key string) *Item {
-	return NewItem(t.dir, key)
+func (t *FilesystemItemPool) GetItem(key string) contract.Item[[]byte] {
+	return NewFilesystemItem(t.dir, key)
 }
 
-func (t *ItemPool) GetItems(keys []string) []*Item {
-	var items = make([]*Item, len(keys))
+func (t *FilesystemItemPool) GetItems(keys []string) []contract.Item[[]byte] {
+	var items = make([]contract.Item[[]byte], len(keys))
 	for i, key := range keys {
 		items[i] = t.GetItem(key)
 	}
@@ -44,7 +45,7 @@ func (t *ItemPool) GetItems(keys []string) []*Item {
 	return items
 }
 
-func (t *ItemPool) HasItem(key string) bool {
+func (t *FilesystemItemPool) HasItem(key string) bool {
 	filename := path.Join(t.dir, key)
 
 	if _, err := os.Stat(filename); err != nil {
@@ -58,7 +59,7 @@ func (t *ItemPool) HasItem(key string) bool {
 	return true
 }
 
-func (t *ItemPool) Clear() bool {
+func (t *FilesystemItemPool) Clear() bool {
 	files, err := os.ReadDir(t.dir)
 
 	if err != nil {
@@ -78,7 +79,7 @@ func (t *ItemPool) Clear() bool {
 	return success
 }
 
-func (t *ItemPool) DeleteItem(key string) bool {
+func (t *FilesystemItemPool) DeleteItem(key string) bool {
 	filename := path.Join(t.dir, key)
 
 	if err := os.Remove(filename); err != nil {
@@ -90,7 +91,7 @@ func (t *ItemPool) DeleteItem(key string) bool {
 	return true
 }
 
-func (t *ItemPool) DeleteItems(keys []string) bool {
+func (t *FilesystemItemPool) DeleteItems(keys []string) bool {
 	success := true
 
 	for _, key := range keys {
@@ -102,7 +103,7 @@ func (t *ItemPool) DeleteItems(keys []string) bool {
 	return success
 }
 
-func (t *ItemPool) Save(item *Item) bool {
+func (t *FilesystemItemPool) Save(item contract.Item[[]byte]) bool {
 	filename := path.Join(t.dir, item.GetKey())
 
 	if err := os.WriteFile(filename, item.Get(), 0644); err != nil {
@@ -114,13 +115,13 @@ func (t *ItemPool) Save(item *Item) bool {
 	return true
 }
 
-func (t *ItemPool) SaveDeferred(item *Item) bool {
+func (t *FilesystemItemPool) SaveDeferred(item contract.Item[[]byte]) bool {
 	t.queue = append(t.queue, item)
 
 	return true
 }
 
-func (t *ItemPool) Commit() bool {
+func (t *FilesystemItemPool) Commit() bool {
 	success := true
 
 	for _, item := range t.queue {
