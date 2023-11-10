@@ -130,5 +130,9 @@ func (t *FilesystemItemPool) Commit() bool {
 		}
 	}
 
+	if success {
+		t.queue = make([]contract.Item[[]byte], 0)
+	}
+
 	return success
 }

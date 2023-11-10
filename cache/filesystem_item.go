@@ -45,9 +45,8 @@ func (t *FilesystemItem) Get() []byte {
 
 func (t *FilesystemItem) IsHit() bool {
 	filename := path.Join(t.dir, t.GetKey())
-	stat, err := os.Stat(filename)
 
-	if err != nil {
+	if _, err := os.Stat(filename); err != nil {
 		if !os.IsNotExist(err) {
 			logrus.WithError(err).WithField("filename", filename).Errorf("failed to get file stat")
 		}
@@ -59,7 +58,7 @@ func (t *FilesystemItem) IsHit() bool {
 		return true
 	}
 
-	return t.expiration.Sub(stat.ModTime()) > 0
+	return t.expiration.Sub(time.Now()) > 0
 }
 
 func (t *FilesystemItem) Set(value []byte) {
